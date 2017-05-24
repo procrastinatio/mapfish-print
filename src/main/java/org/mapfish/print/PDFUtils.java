@@ -266,65 +266,38 @@ public class PDFUtils {
                         }
                     }
                 } else {
-                    //GetMethod getMethod = null;
                     HttpClient httpClient = new DefaultHttpClient();
 
                     MetricRegistry registry = context.getConfig().getMetricRegistry();
                     final Timer.Context timer = registry.timer("http_" + uri.getAuthority()).time();
                     try {
-                        //getMethod = new GetMethod(uri.toString());
                         HttpGet httpGetRequest = new HttpGet(uri.toString());
                         for (Map.Entry<String, String> entry : context.getHeaders().entrySet()) {
-                           // getMethod.setRequestHeader(entry.getKey(), entry.getValue());
                             httpGetRequest.addHeader(entry.getKey(), entry.getValue());
                         }
                         if (LOGGER.isDebugEnabled()) LOGGER.debug("loading image: " + uri);
-                        //context.getConfig().getHttpClient(uri).executeMethod(getMethod);
                         HttpResponse httpResponse = httpClient.execute(httpGetRequest);
 
-                        //statusCode = getMethod.getStatusCode();
                         statusCode = httpResponse.getStatusLine().getStatusCode();;
                         statusText = httpResponse.getStatusLine().getReasonPhrase();
 
-                       // Header contentTypeHeader = getMethod.getResponseHeader("Content-Type");
                        Header contentTypeHeader = httpResponse.getFirstHeader("Content-Type");
                        if (contentTypeHeader == null) {
                             contentType = "";
                         } else {
                             contentType = contentTypeHeader.getValue();
                         }
-                       // data = getMethod.getResponseBody();
 
                        HttpEntity entity = httpResponse.getEntity();
 
                        data = EntityUtils.toByteArray(entity);
 
-                       //data = new byte[1024];
-                       //if (entity != null) {
-                       //  InputStream inputStream = entity.getContent();
-                       //  try {
-                       //    int bytesRead = 0;
-                       //    BufferedInputStream bis = new BufferedInputStream(inputStream);
-                       //    while ((bytesRead = bis.read(data)) != -1) {
-                       //      String chunk = new String(data, 0, bytesRead);
-                       //      //System.out.println(chunk);
-                       //    }
-                       //  } catch (Exception e) {
-                       //    e.printStackTrace();
-                       //  } finally {
-                       //    try { inputStream.close(); } catch (Exception ignore) {}
-                       //  }
-                       //}
                      } catch (Exception e) {
-                       e.printStackTrace();
-
-
+                       LOGGER.warn(e);
+                       // e.printStackTrace();
                     } finally {
                         timer.close();
                         httpClient.getConnectionManager().shutdown();
-                       // if (getMethod != null) {
-                       //     getMethod.releaseConnection();
-                       // }
                     }
                 }
 
