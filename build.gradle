@@ -16,9 +16,9 @@ apply plugin: 'idea'
 apply plugin: 'project-report'
 
 repositories {
-        mavenLocal()
+        //mavenLocal()
         maven {url "http://download.osgeo.org/webdav/geotools"}
-  mavenCentral()
+        mavenCentral()
 }
 }
 
@@ -47,6 +47,10 @@ dependencies {
             'com.vividsolutions:jts:1.13',
             "org.mapfish.geo:mapfish-geo-lib:1.2.0",
             'commons-httpclient:commons-httpclient:3.1',
+
+           'org.apache.httpcomponents:httpclient:4.5.3',
+
+
             'org.geotools:gt-epsg-hsql:8.6',
             'org.geotools:gt-render:8.6',
             'org.apache.pdfbox:pdfbox:1.6.0',
@@ -59,6 +63,7 @@ dependencies {
             "com.codahale.metrics:metrics-log4j:$metricsVersion",
             'javax.media:jai_codec:1.1.3',
             "com.google.guava:guava:15.0")
+   // compile files('commons-httpclient-3.1.0.redhat-7.jar')
 
   compile ('org.apache.xmlgraphics:batik-transcoder:1.7'){
     exclude module: 'fop'
@@ -102,10 +107,12 @@ manifest.mainAttributes(
 	'Build-Time': new Date().getDateTimeString(),
 	'git-revision': gitRevision())
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 compileJava.options.compilerArgs = ['-Xlint:deprecation', '-Xlint:unchecked']
+System.setProperty('https.protocols', 'TLSv1.1,TLSv1.2')
+
 
 jar {
   enabled = true
