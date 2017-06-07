@@ -47,7 +47,7 @@ import org.apache.batik.gvt.GraphicsNode;
 import java.io.File;
 import org.apache.batik.util.XMLResourceDescriptor;
 import java.io.IOException;
-import org.apache.commons.httpclient.Header;
+//import org.apache.commons.httpclient.Header;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -70,6 +70,17 @@ import org.mapfish.print.config.layout.TableConfig;
 import java.util.regex.Pattern;
 import org.mapfish.print.utils.PJsonObject;
 import org.w3c.dom.svg.SVGDocument;
+
+
+import java.io.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.HttpHeaders;
+import org.apache.http.Header;
+import org.apache.http.util.EntityUtils;
 
 /**
  * Some utility functions for iText.
@@ -209,9 +220,9 @@ public class PDFUtils {
             return Image.getInstance(new File(path).toURI().toURL());
         } else {
 
-            final String contentType;
-            final int statusCode;
-            final String statusText;
+            String contentType = "";
+            int statusCode = 100;
+            String statusText = "";
             byte[] data = null;
             try {
                 //read the whole image content in memory, then give that to iText
@@ -255,31 +266,38 @@ public class PDFUtils {
                         }
                     }
                 } else {
-                    GetMethod getMethod = null;
+                    HttpClient httpClient = new DefaultHttpClient();
+
                     MetricRegistry registry = context.getConfig().getMetricRegistry();
                     final Timer.Context timer = registry.timer("http_" + uri.getAuthority()).time();
                     try {
-                        getMethod = new GetMethod(uri.toString());
+                        HttpGet httpGetRequest = new HttpGet(uri.toString());
                         for (Map.Entry<String, String> entry : context.getHeaders().entrySet()) {
-                            getMethod.setRequestHeader(entry.getKey(), entry.getValue());
+                            httpGetRequest.addHeader(entry.getKey(), entry.getValue());
                         }
                         if (LOGGER.isDebugEnabled()) LOGGER.debug("loading image: " + uri);
-                        context.getConfig().getHttpClient(uri).executeMethod(getMethod);
-                        statusCode = getMethod.getStatusCode();
-                        statusText = getMethod.getStatusText();
+                        HttpResponse httpResponse = httpClient.execute(httpGetRequest);
 
-                        Header contentTypeHeader = getMethod.getResponseHeader("Content-Type");
-                        if (contentTypeHeader == null) {
+                        statusCode = httpResponse.getStatusLine().getStatusCode();;
+                        statusText = httpResponse.getStatusLine().getReasonPhrase();
+
+                       Header contentTypeHeader = httpResponse.getFirstHeader("Content-Type");
+                       if (contentTypeHeader == null) {
                             contentType = "";
                         } else {
                             contentType = contentTypeHeader.getValue();
                         }
-                        data = getMethod.getResponseBody();
+
+                       HttpEntity entity = httpResponse.getEntity();
+
+                       data = EntityUtils.toByteArray(entity);
+
+                     } catch (Exception e) {
+                       LOGGER.warn(e);
+                       // e.printStackTrace();
                     } finally {
                         timer.close();
-                        if (getMethod != null) {
-                            getMethod.releaseConnection();
-                        }
+                        httpClient.getConnectionManager().shutdown();
                     }
                 }
 
