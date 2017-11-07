@@ -212,6 +212,7 @@ public class WMTSMapReader extends TileableMapReader {
                         commonUri.getPath(), query, commonUri.getFragment());
             }
         }
+        // Simplified WMTS protocole
         else {
             double targetResolution = (maxGeoX - minGeoX) / w;
             WMTSLayerInfo.ResolutionInfo resolution = tileCacheLayerInfo.getNearestResolution(targetResolution);
@@ -235,8 +236,15 @@ public class WMTSMapReader extends TileableMapReader {
                 }
                 path.append('/').append(matrixSet);
                 path.append('/').append(resolution.index + zoomOffset);
-                path.append('/').append(row);
-                path.append('/').append(col);
+                // swisstopo botch up order for 21781
+                if (matrixSet.equals("21781")) {
+                    path.append('/').append(row);
+                    path.append('/').append(col);
+                // usual col/row order
+                } else {
+                    path.append('/').append(col);
+                    path.append('/').append(row);
+                }
 
                 path.append('.').append(tileCacheLayerInfo.getExtension());
 
